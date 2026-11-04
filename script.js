@@ -63,7 +63,11 @@ form.addEventListener("submit", (e) => {
   ].filter(Boolean);
 
   const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
-  window.open(url, "_blank", "noopener");
+  // A real <a target="_blank"> click is less likely to be popup-blocked than window.open().
+  const a = Object.assign(document.createElement("a"), { href: url, target: "_blank", rel: "noopener" });
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 });
 
 document.getElementById("year").textContent = new Date().getFullYear();

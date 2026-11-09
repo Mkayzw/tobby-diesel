@@ -41,6 +41,13 @@ jobs:
     steps:
       # Coolify redeploys every resource tagged "tobby-diesel", pulling the new :latest image.
       - name: Trigger Coolify deploy
+        env:
+          COOLIFY_URL: ${{ vars.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
-          curl -fsS -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            "${{ vars.COOLIFY_URL }}/api/v1/deploy?tag=tobby-diesel"
+          # Strip a trailing slash so "https://host/" doesn't become "https://host//api/...".
+          url="${COOLIFY_URL%/}/api/v1/deploy?tag=tobby-diesel"
+          echo "Calling: $url"
+          # --fail-with-body still fails the step on 4xx/5xx but prints Coolify's error message.
+          curl --fail-with-body -sS -w "\nHTTP %{http_code}\n" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" "$url"

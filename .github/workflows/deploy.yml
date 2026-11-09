@@ -46,8 +46,12 @@ jobs:
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
           # Strip a trailing slash so "https://host/" doesn't become "https://host//api/...".
-          url="${COOLIFY_URL%/}/api/v1/deploy?tag=tobby-diesel"
-          echo "Calling: $url"
+          url="${COOLIFY_URL%/}/api/v1/deploy"
+          echo "Calling: POST $url (tag=tobby-diesel)"
+          # Newer Coolify versions only accept POST here (GET returns 405), options go in a JSON body.
           # --fail-with-body still fails the step on 4xx/5xx but prints Coolify's error message.
           curl --fail-with-body -sS -w "\nHTTP %{http_code}\n" \
-            -H "Authorization: Bearer $COOLIFY_TOKEN" "$url"
+            -X POST "$url" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"tag":"tobby-diesel"}'

@@ -33,10 +33,26 @@ python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
-## Deploy
+## Deploy (Docker → GHCR → Coolify)
 
-**GitHub Pages:** push to GitHub → repo *Settings → Pages* → Source: *Deploy from a branch* → `main` / root. Live at `https://<user>.github.io/<repo>/` in about a minute.
+Every push to `main` runs `.github/workflows/deploy.yml`:
 
-**Netlify / Cloudflare Pages / Vercel:** import the repo, leave the build command empty, publish directory `/`.
+1. **build** — builds the `Dockerfile` (nginx:alpine serving the static files) and pushes
+   `ghcr.io/mkayzw/tobby-diesel:latest` and `:<commit-sha>`.
+2. **deploy** — calls Coolify's API to redeploy every resource tagged `tobby-diesel`.
 
-A custom domain (e.g. `tobbydiesels.co.zw`) can be pointed at any of these from the host's domain settings.
+One-time setup:
+
+- Repo **Settings → Secrets and variables → Actions**:
+  - secret `COOLIFY_TOKEN` (Coolify API token)
+  - variable `COOLIFY_URL` (e.g. `https://coolify.example.com`, no trailing slash)
+- In Coolify: create a **Docker Image** resource using `ghcr.io/mkayzw/tobby-diesel:latest`,
+  port **80**, give it the tag **`tobby-diesel`**, and attach the domain.
+- If the GHCR package is private, give Coolify registry credentials, or make the package public.
+
+Test the container locally:
+
+```bash
+docker build -t tobby-diesel . && docker run --rm -p 8080:80 tobby-diesel
+# open http://localhost:8080
+```
